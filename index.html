@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>فَهِمْ - لعبة الأسئلة الدينية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e6f5c;
+            --primary-dark: #155448;
+            --primary-light: #2a9d8f;
+            --accent: #e9c46a;
+            --accent-dark: #d4a373;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #1e6f5c 0%, #2a9d8f 100%);
+            --shadow: 0 10px 40px rgba(0,0,0,0.3);
+            --shadow-sm: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .bg-animation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; overflow: hidden;
+        }
+        .bg-animation::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(30,111,92,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(233,196,106,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(42,157,143,0.1) 0%, transparent 50%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+        @keyframes bgMove {
+            0%,100% { transform: translate(0,0); }
+            33% { transform: translate(-5%,-5%); }
+            66% { transform: translate(5%,-3%); }
+        }
+        .particle {
+            position: fixed; border-radius: 50%; opacity: 0.3;
+            animation: float 15s infinite; pointer-events: none;
+        }
+        @keyframes float {
+            0%,100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+        .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; padding: 0 16px; }
+        .header { padding: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 28px; font-weight: 900; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+        .logo span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+        .stats-bar { display: flex; gap: 12px; align-items: center; }
+        .stat-item { background: var(--bg-card); padding: 8px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; border: 1px solid rgba(255,255,255,0.05); box-shadow: var(--shadow-sm); }
+        .stat-icon { font-size: 16px; }
+        .screen { display: none; animation: fadeIn 0.5s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes correctAnim { 0% { transform: scale(1); } 50% { transform: scale(1.1); box-shadow: 0 0 30px var(--success); } 100% { transform: scale(1); } }
+        @keyframes wrongAnim { 0% { transform: translateX(0); } 25% { transform: translateX(-15px); } 50% { transform: translateX(15px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+        @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        .home-screen { text-align: center; padding: 20px 0; }
+        .hero-illustration { width: 220px; height: 220px; margin: 0 auto 30px; background: var(--gradient-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 100px; box-shadow: 0 20px 60px rgba(30,111,92,0.4), inset 0 -10px 30px rgba(0,0,0,0.2); position: relative; animation: pulse 3s ease-in-out infinite; }
+        .hero-illustration::after { content: ''; position: absolute; inset: -10px; border-radius: 50%; border: 2px solid rgba(233,196,106,0.3); animation: pulse 3s ease-in-out infinite 0.5s; }
+        .hero-title { font-size: 32px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
+        .hero-subtitle { font-size: 16px; color: var(--text-muted); margin-bottom: 40px; line-height: 1.6; }
+        .btn { display: block; width: 100%; padding: 18px 24px; border: none; border-radius: 16px; font-family: 'Tajawal', sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px; position: relative; overflow: hidden; }
+        .btn-primary { background: var(--gradient-1); color: white; box-shadow: 0 8px 25px rgba(30,111,92,0.4); }
+        .btn-primary:active { transform: scale(0.98); box-shadow: 0 4px 15px rgba(30,111,92,0.3); }
+        .btn-secondary { background: var(--bg-card); color: var(--text); border: 2px solid rgba(255,255,255,0.1); }
+        .btn-secondary:active { background: var(--bg-light); transform: scale(0.98); }
+        .levels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .level-card { background: var(--bg-card); border: 2px solid transparent; border-radius: 20px; padding: 24px 16px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .level-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--gradient-1); transform: scaleX(0); transition: transform 0.3s ease; }
+        .level-card:hover::before, .level-card:active::before { transform: scaleX(1); }
+        .level-card.locked { opacity: 0.5; cursor: not-allowed; }
+        .level-card:not(.locked):active { transform: scale(0.95); border-color: var(--primary-light); }
+        .level-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+        .level-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .level-desc { font-size: 12px; color: var(--text-muted); }
+        .level-stars { margin-top: 8px; font-size: 14px; color: var(--accent); }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 10px 0; }
+        .progress-container { flex: 1; margin: 0 15px; }
+        .progress-bar { height: 8px; background: var(--bg-light); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--gradient-1); border-radius: 10px; transition: width 0.5s ease; width: 0%; }
+        .question-counter { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .timer-container { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .timer-svg { position: absolute; transform: rotate(-90deg); }
+        .timer-bg { fill: none; stroke: var(--bg-light); stroke-width: 4; }
+        .timer-progress { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+        .timer-text { font-size: 18px; font-weight: 800; color: var(--accent); }
+        .timer-warning .timer-progress { stroke: var(--warning); }
+        .timer-danger .timer-progress { stroke: var(--error); }
+        .timer-warning .timer-text { color: var(--warning); }
+        .timer-danger .timer-text { color: var(--error); }
+        .question-card { background: var(--bg-card); border-radius: 24px; padding: 28px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.05); animation: slideUp 0.5s ease; }
+        .category-badge { display: inline-block; padding: 6px 14px; background: rgba(30,111,92,0.2); color: var(--primary-light); border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 16px; border: 1px solid rgba(30,111,92,0.3); }
+        .question-text { font-size: 20px; font-weight: 700; line-height: 1.6; margin-bottom: 8px; }
+        .question-difficulty { display: flex; gap: 4px; margin-top: 12px; }
+        .difficulty-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-light); }
+        .difficulty-dot.active { background: var(--accent); }
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background: var(--bg-light); border: 2px solid transparent; border-radius: 16px; padding: 18px 20px; color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 600; text-align: right; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+        .option-btn::before { content: ''; position: absolute; right: 0; top: 0; width: 4px; height: 100%; background: var(--primary-light); opacity: 0; transition: opacity 0.3s ease; }
+        .option-btn:not(.disabled):active { transform: scale(0.98); border-color: var(--primary-light); background: rgba(30,111,92,0.1); }
+        .option-btn:not(.disabled):active::before { opacity: 1; }
+        .option-letter { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+        .option-btn.correct { background: rgba(34,197,94,0.15); border-color: var(--success); color: var(--success); animation: correctAnim 0.5s ease; }
+        .option-btn.correct .option-letter { background: var(--success); color: white; }
+        .option-btn.wrong { background: rgba(239,68,68,0.15); border-color: var(--error); color: var(--error); animation: wrongAnim 0.5s ease; }
+        .option-btn.wrong .option-letter { background: var(--error); color: white; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+        .option-btn.revealed { background: rgba(34,197,94,0.15); border-color: var(--success); }
+        .option-btn.revealed .option-letter { background: var(--success); color: white; }
+        .explanation-box { background: rgba(30,111,92,0.1); border: 1px solid rgba(30,111,92,0.3); border-radius: 16px; padding: 20px; margin-top: 20px; animation: slideUp 0.5s ease; display: none; }
+        .explanation-box.show { display: block; }
+        .explanation-title { font-size: 14px; font-weight: 700; color: var(--primary-light); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .explanation-text { font-size: 15px; line-height: 1.8; color: var(--text-muted); }
+        .next-btn { margin-top: 16px; background: var(--gradient-1); color: white; border: none; border-radius: 12px; padding: 14px 28px; font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.3s ease; }
+        .next-btn:active { transform: scale(0.98); }
+        .score-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
+        .score-popup.show { display: flex; animation: fadeIn 0.3s ease; }
+        .score-card { background: var(--bg-card); border-radius: 28px; padding: 40px 30px; text-align: center; width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); box-shadow: var(--shadow); animation: slideUp 0.5s ease; }
+        .score-emoji { font-size: 60px; margin-bottom: 16px; display: block; }
+        .score-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .score-value { font-size: 48px; font-weight: 900; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 10px 0; }
+        .score-message { font-size: 16px; color: var(--text-muted); margin-bottom: 24px; }
+        .score-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .score-stat { background: var(--bg-dark); padding: 12px; border-radius: 12px; }
+        .score-stat-value { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .score-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .badges-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
+        .badge { background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .badge.new { border-color: var(--accent); color: var(--accent); animation: pulse 2s infinite; }
+        .streak-indicator { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px); background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 12px 24px; border-radius: 50px; font-weight: 800; font-size: 16px; box-shadow: 0 10px 30px rgba(245,158,11,0.4); z-index: 500; transition: transform 0.5s cubic-bezier(0.68,-0.55,0.265,1.55); display: flex; align-items: center; gap: 8px; }
+        .streak-indicator.show { transform: translateX(-50%) translateY(0); }
+        .confetti { position: fixed; width: 10px; height: 10px; top: -10px; animation: confettiFall 3s ease-out forwards; z-index: 999; }
+        .xp-bar { margin-top: 20px; }
+        .xp-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .xp-progress { height: 6px; background: var(--bg-light); border-radius: 10px; overflow: hidden; }
+        .xp-fill { height: 100%; background: var(--accent); border-radius: 10px; transition: width 0.5s ease; }
+        @media (max-width: 380px) { .hero-title { font-size: 26px; } .question-text { font-size: 18px; } .option-btn { font-size: 14px; padding: 16px; } .levels-grid { grid-template-columns: 1fr; } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-light); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="streak-indicator" id="streakIndicator"><span>🔥</span><span id="streakText">سلسلة صحيحة!</span></div>
+    <div class="app-container">
+        <div class="header" id="mainHeader">
+            <div class="logo">فَهِمْ</div>
+            <div class="stats-bar">
+                <div class="stat-item"><span class="stat-icon">⭐</span><span id="totalScore">0</span></div>
+                <div class="stat-item"><span class="stat-icon">🏆</span><span id="totalBadges">0</span></div>
+            </div>
+        </div>
+        <div class="screen active" id="homeScreen">
+            <div class="home-screen">
+                <div class="hero-illustration">📖</div>
+                <h1 class="hero-title">اختبر معلوماتك<br>في <span>الإسلام</span></h1>
+                <p class="hero-subtitle">رحلة تعليمية ممتعة من الأسهل إلى الأصعب<br>اكتشف عمق علمك واربح الشارات</p>
+                <button class="btn btn-primary" onclick="showScreen('levelsScreen')">🎮 ابدأ اللعب</button>
+                <button class="btn btn-secondary" onclick="showScreen('badgesScreen')">🏆 شاراتي</button>
+                <button class="btn btn-secondary" onclick="showScreen('aboutScreen')">ℹ️ عن اللعبة</button>
+            </div>
+        </div>
+        <div class="screen" id="levelsScreen">
+            <h2 style="font-size:24px;margin-bottom:8px;">اختر مستواك</h2>
+            <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">اكمل كل مستوى لفتح التالي</p>
+            <div class="levels-grid" id="levelsGrid"></div>
+            <button class="btn btn-secondary" style="margin-top:24px;" onclick="showScreen('homeScreen')">🔙 رجوع</button>
+        </div>
+        <div class="screen" id="gameScreen">
+            <div class="game-header">
+                <div class="question-counter" id="questionCounter">1 / 10</div>
+                <div class="progress-container"><div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div></div>
+                <div class="timer-container" id="timerContainer">
+                    <svg class="timer-svg" width="60" height="60" viewBox="0 0 100 100"><circle class="timer-bg" cx="50" cy="50" r="45"/><circle class="timer-progress" id="timerCircle" cx="50" cy="50" r="45"/></svg>
+                    <span class="timer-text" id="timerText">30</span>
+                </div>
+            </div>
+            <div class="question-card" id="questionCard">
+                <span class="category-badge" id="categoryBadge">العقيدة</span>
+                <h2 class="question-text" id="questionText">جاري التحميل...</h2>
+                <div class="question-difficulty" id="difficultyDots"></div>
+            </div>
+            <div class="options-container" id="optionsContainer"></div>
+            <div class="explanation-box" id="explanationBox">
+                <div class="explanation-title"><span>💡</span><span>التفصيل</span></div>
+                <p class="explanation-text" id="explanationText"></p>
+                <button class="next-btn" id="nextBtn" onclick="nextQuestion()">السؤال التالي ⬅️</button>
+            </div>
+        </div>
+        <div class="screen" id="badgesScreen">
+            <h2 style="font-size:24px;margin-bottom:8px;">🏆 شاراتي</h2>
+            <p style="color:var(--text-muted);margin-bottom:24px;font-size:14px;">اجمع كل الشارات من خلال إكمال التحديات</p>
+            <div class="badges-container" id="badgesContainer"></div>
+            <button class="btn btn-secondary" onclick="showScreen('homeScreen')">🔙 رجوع</button>
+        </div>
+        <div class="screen" id="aboutScreen">
+            <div style="text-align:center;padding:40px 0;">
+                <div style="font-size:80px;margin-bottom:20px;">📖</div>
+                <h2 style="font-size:28px;margin-bottom:16px;">فَهِمْ</h2>
+                <p style="color:var(--text-muted);line-height:2;font-size:16px;margin-bottom:30px;">لعبة تعليمية تفاعلية تهدف إلى تعزيز المعرفة الدينية الإسلامية<br>من خلال أسئلة متدرجة الصعوبة مع شروحات مفصلة<br>مصممة خصيصاً للهاتف بتجربة سلسة وجذابة</p>
+                <div style="background:var(--bg-card);border-radius:16px;padding:20px;margin-bottom:24px;text-align:right;">
+                    <h3 style="margin-bottom:12px;color:var(--accent);">🎯 كيفية اللعب:</h3>
+                    <ul style="color:var(--text-muted);line-height:2;padding-right:20px;font-size:14px;">
+                        <li>اختر مستوى مناسباً لمعرفتك</li><li>أجب على الأسئلة قبل انتهاء الوقت</li><li>اقرأ التفصيل بعد كل إجابة</li><li>اكمل المستوى لفتح المستوى التالي</li><li>اجمع الشارات والنقاط</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="showScreen('homeScreen')">🔙 العودة للرئيسية</button>
+            </div>
+        </div>
+    </div>
+    <div class="score-popup" id="scorePopup">
+        <div class="score-card">
+            <span class="score-emoji" id="scoreEmoji">🎉</span>
+            <h2 class="score-title" id="scoreTitle">أحسنت!</h2>
+            <div class="score-value" id="scoreValue">850</div>
+            <p class="score-message" id="scoreMessage">أداء رائع! استمر في التعلم</p>
+            <div class="score-stats">
+                <div class="score-stat"><div class="score-stat-value" id="correctCount">8</div><div class="score-stat-label">صحيح</div></div>
+                <div class="score-stat"><div class="score-stat-value" id="wrongCount">2</div><div class="score-stat-label">خطأ</div></div>
+                <div class="score-stat"><div class="score-stat-value" id="accuracy">80%</div><div class="score-stat-label">الدقة</div></div>
+            </div>
+            <div class="badges-container" id="earnedBadges"></div>
+            <div class="xp-bar"><div class="xp-label"><span>المستوى التالي</span><span id="xpText">350 / 500</span></div><div class="xp-progress"><div class="xp-fill" id="xpFill" style="width:70%"></div></div></div>
+            <button class="btn btn-primary" style="margin-top:24px;" onclick="closeScorePopup()">🔄 العب مرة أخرى</button>
+            <button class="btn btn-secondary" onclick="showScreen('levelsScreen');closeScorePopup();">📋 المستويات</button>
+        </div>
+    </div>
+<script>
+const levels = [
+{
+    id: 1, name: 'المبتدئ', desc: 'أساسيات الإسلام', icon: '🌱',
+    questions: [
+        { text: 'كم عدد أركان الإيمان؟', options: ['أربعة','خمسة','ستة','سبعة'], correct: 2, category: 'العقيدة', difficulty: 1, explanation: 'أركان الإيمان ستة: الإيمان بالله، وملائكته، وكتبه، ورسله، واليوم الآخر، والقدر خيره وشره.' },
+        { text: 'ما هو أول مسجد بني في الإسلام؟', options: ['المسجد الحرام','مسجد قباء','المسجد النبوي','المسجد الأقصى'], correct: 1, category: 'السيرة', difficulty: 1, explanation: 'مسجد قباء هو أول مسجد بني في الإسلام، بناه النبي ﷺ عند وصوله إلى المدينة المنورة.' },
+        { text: 'كم عدد أركان الصلاة؟', options: ['أربعة','خمسة','ستة','سبعة'], correct: 1, category: 'الفقه', difficulty: 1, explanation: 'أركان الصلاة خمسة عشر: القيام، والتكبير، وقراءة الفاتحة، والركوع، والاعتدال منه، والسجود، والاعتدال منه، والجلوس بين السجدتين، والطمأنينة، والتشهد الأخير، والجلوس له، والتسليم، والترتيب، والموالاة.' },
+        { text: 'في أي شهر يصوم المسلمون؟', options: ['شعبان','رمضان','شوال','ذو الحجة'], correct: 1, category: 'الفقه', difficulty: 1, explanation: 'شهر رمضان هو الشهر الذي فرض الله فيه الصيام على المسلمين، وهو شهر القرآن والرحمة والمغفرة.' },
+        { text: 'من هو خاتم الأنبياء والمرسلين؟', options: ['عيسى عليه السلام','موسى عليه السلام','محمد ﷺ','إبراهيم عليه السلام'], correct: 2, category: 'العقيدة', difficulty: 1, explanation: 'النبي محمد ﷺ هو خاتم الأنبياء والمرسلين، لا نبي بعده، كما ورد في الحديث الصحيح.' },
+        { text: 'ما هي أقصر سورة في القرآن الكريم؟', options: ['الكوثر','العصر','النصر','الإخلاص'], correct: 0, category: 'القرآن', difficulty: 1, explanation: 'سورة الكوثر هي أقصر سورة في القرآن، تتكون من ثلاث آيات فقط، وهي من السور المكية.' },
+        { text: 'كم عدد ركعات صلاة الفجر؟', options: ['ركعتان','أربع ركعات','ثلاث ركعات','خمس ركعات'], correct: 0, category: 'الفقه', difficulty: 1, explanation: 'صلاة الفجر ركعتان فرض، وهي أول صلاة في اليوم ووقتها من طلوع الفجر الصادق إلى طلوع الشمس.' },
+        { text: 'ما هو الكتاب المقدس الذي أنزل على النبي محمد ﷺ؟', options: ['الإنجيل','التوراة','الزبور','القرآن الكريم'], correct: 3, category: 'العقيدة', difficulty: 1, explanation: 'القرآن الكريم هو الكتاب المقدس الذي أنزله الله على نبيه محمد ﷺ، وهو معجزته الخالدة.' },
+        { text: 'في أي اتجاه يصلي المسلمون؟', options: ['المدينة','القدس','مكة المكرمة','الشام'], correct: 2, category: 'الفقه', difficulty: 1, explanation: 'المسلمون يصلون باتجاه الكعبة المشرفة في مكة المكرمة، وهي القبلة التي حددها الله تعالى.' },
+        { text: 'ما هي لغة القرآن الكريم؟', options: ['الفارسية','العربية','التركية','الأردية'], correct: 1, category: 'القرآن', difficulty: 1, explanation: 'القرآن الكريم نزل باللغة العربية الفصحى، وهي لغة أهل الجزيرة العربية في زمن النبي ﷺ.' }
+    ]
+},
+{
+    id: 2, name: 'المتوسط', desc: 'معرفة أعمق', icon: '🌿',
+    questions: [
+        { text: 'من هو الصحابي الذي لقب بـ "أسد الله"؟', options: ['عمر بن الخطاب','علي بن أبي طالب','خالد بن الوليد','حمزة بن عبد المطلب'], correct: 3, category: 'السيرة', difficulty: 2, explanation: 'حمزة بن عبد المطلب لقب بـ"أسد الله" لشجاعته وقوته، وكان عم النبي ﷺ وأخاه من الرضاعة.' },
+        { text: 'كم عدد سور القرآن الكريم؟', options: ['110 سور','114 سورة','120 سورة','100 سورة'], correct: 1, category: 'القرآن', difficulty: 2, explanation: 'القرآن الكريم يتكون من 114 سورة، مقسمة إلى 30 جزءاً، وبدأت بسورة الفاتحة وختمت بسورة الناس.' },
+        { text: 'ما هي السورة التي تُسمى "قلب القرآن"؟', options: ['الفاتحة','البقرة','يس','الإخلاص'], correct: 2, category: 'القرآن', difficulty: 2, explanation: 'سورة يس تُسمى قلب القرآن لما فيها من الموضوعات العظيمة، وورد في فضلها أحاديث كثيرة.' },
+        { text: 'من هو أول خليفة في الإسلام؟', options: ['عمر بن الخطاب','عثمان بن عفان','أبو بكر الصديق','علي بن أبي طالب'], correct: 2, category: 'السيرة', difficulty: 2, explanation: 'أبو بكر الصديق رضي الله عنه هو أول الخلفاء الراشدين، وخلافته استمرت سنتين وثلاثة أشهر.' },
+        { text: 'ما هي زكاة الفطر؟', options: ['نصف صاع','صاع من طعام','صاع من تمر','كل ما سبق'], correct: 1, category: 'الفقه', difficulty: 2, explanation: 'زكاة الفطر صاع من طعام أهل البلد (قمح، شعير، تمر، أرز...) يُخرج قبل صلاة العيد.' },
+        { text: 'كم عدد أحزاب القرآن الكريم؟', options: ['40 حزباً','50 حزباً','60 حزباً','70 حزباً'], correct: 2, category: 'القرآن', difficulty: 2, explanation: 'القرآن مقسم إلى 60 حزباً، كل حزب نصف جزء، لتسهيل ختم القرآن في شهر رمضان (حزبان يومياً).' },
+        { text: 'من هو النبي الذي ابتلعه الحوت؟', options: ['نوح عليه السلام','يونس عليه السلام','موسى عليه السلام','إبراهيم عليه السلام'], correct: 1, category: 'القصص', difficulty: 2, explanation: 'النبي يونس عليه السلام ابتلعه الحوت بعد أن ترك قومه غضباناً، ثم تاب الله عليه وأخرجه من بطنه.' },
+        { text: 'ما هي السورة التي تُسمى "السابعة"؟', options: ['الفاتحة','الإخلاص','الكافرون','المعوذتين'], correct: 0, category: 'القرآن', difficulty: 2, explanation: 'الفاتحة تُسمى السابعة لأنها سبع آيات، وتُسمى أيضاً أم الكتاب وأم القرآن والشفاء والكافية.' },
+        { text: 'في أي عام هجري توفي النبي ﷺ؟', options: ['10 هـ','11 هـ','12 هـ','13 هـ'], correct: 1, category: 'السيرة', difficulty: 2, explanation: 'توفي النبي ﷺ في شهر ربيع الأول من السنة الحادية عشرة للهجرة، عن عمر 63 سنة.' },
+        { text: 'ما هو الحديث القدسي؟', options: ['حديث النبي ﷺ','حديث منسوب لله تعالى','حديث الصحابة','حديث موقوف'], correct: 1, category: 'الحديث', difficulty: 2, explanation: 'الحديث القدسي هو ما أثنى الله به على نفسه أو نبيه في متنه، ورواه النبي ﷺ بلفظه، لكنه ليس بكلام الله المنزل كالقرآن.' }
+    ]
+},
+{
+    id: 3, name: 'المتقدم', desc: 'تحديات أكبر', icon: '🌳',
+    questions: [
+        { text: 'من هو الصحابي الذي آمن به النبي ﷺ قبل أن يؤمن بنفسه؟', options: ['أبو بكر','علي بن أبي طالب','خديجة','زيد بن حارثة'], correct: 2, category: 'السيرة', difficulty: 3, explanation: 'خديجة بنت خويلدة رضي الله عنها هي أول من آمن بالنبي ﷺ من النساء، وآمن به قبل أن يؤمن بنفسه وصدقته.' },
+        { text: 'كم عدد آيات سورة البقرة؟', options: ['280 آية','286 آية','290 آية','300 آية'], correct: 1, category: 'القرآن', difficulty: 3, explanation: 'سورة البقرة أطول سور القرآن، تتكون من 286 آية، وهي من السور المدنية.' },
+        { text: 'ما هي "العشر المبشرات"؟', options: ['عشر سور','عشر صحابة','عشر ليالٍ','عشر آيات'], correct: 1, category: 'السيرة', difficulty: 3, explanation: 'العشر المبشرات هم عشرة صحابة بشرهم النبي ﷺ بالجنة: أبو بكر، عمر، عثمان، علي، طلحة، الزبير، سعد، سعيد، عبد الرحمن، أبو عبيدة.' },
+        { text: 'من هو الإمام الذي جمع القرآن في عهد أبي بكر؟', options: ['علي بن أبي طالب','زيد بن ثابت','أبو هريرة','عبد الله بن مسعود'], correct: 1, category: 'القرآن', difficulty: 3, explanation: 'زيد بن ثابت رضي الله عنه هو الذي جمع القرآن في عهد أبي بكر بعد معركة اليمامة، ثم في عهد عثمان رضي الله عنه.' },
+        { text: 'ما هي "الركعات المؤكدة" في الوتر؟', options: ['ركعة واحدة','ركعتان','ثلاث ركعات','خمس ركعات'], correct: 2, category: 'الفقه', difficulty: 3, explanation: 'الوتر ثلاث ركعات مؤكدة، ويستحب الجلوس للتشهد في الركعة الثانية، ثم القيام للثالثة.' },
+        { text: 'من هو "ذو النورين"؟', options: ['علي بن أبي طالب','عثمان بن عفان','عمر بن الخطاب','الحسن بن علي'], correct: 1, category: 'السيرة', difficulty: 3, explanation: 'عثمان بن عفان لُقب بـ"ذي النورين" لأنه تزوج ابنتي النبي ﷺ: رقية ثم أم كلثوم بعد وفاتها.' },
+        { text: 'ما هي "السور المُعوذتين"؟', options: ['الفلق والناس','الإخلاص والفلق','الناس والإخلاص','الفاتحة والإخلاص'], correct: 0, category: 'القرآن', difficulty: 3, explanation: 'المعوذتان هما سورة الفلق وسورة الناس، سميتا بذلك لأن النبي ﷺ كان يعوذ بهما.' },
+        { text: 'كم عدد أحاديث صحيح البخاري تقريباً؟', options: ['3000 حديث','5000 حديث','7000 حديث','9000 حديث'], correct: 2, category: 'الحديث', difficulty: 3, explanation: 'صحيح البخاري يحتوي على 7275 حديثاً تقريباً (مع التكرار)، و2602 حديثاً بدون تكرار، وهو أصح كتاب بعد القرآن.' },
+        { text: 'من هو "الفاروق"؟', options: ['أبو بكر','عمر بن الخطاب','عثمان','علي'], correct: 1, category: 'السيرة', difficulty: 3, explanation: 'عمر بن الخطاب لُقب بالفاروق لأن الله فرق به بين الحق والباطل، وكان أول من جمع الناس في صلاة التراويح.' },
+        { text: 'ما هي "الشفاعة العظمى"؟', options: ['شفاعة الملائكة','شفاعة النبي ﷺ','شفاعة الصالحين','شفاعة القرآن'], correct: 1, category: 'العقيدة', difficulty: 3, explanation: 'الشفاعة العظمى هي شفاعة النبي ﷺ يوم القيامة لأهل الموقف في الحساب، وهي خاصة به ﷺ.' }
+    ]
+},
+{
+    id: 4, name: 'الخبير', desc: 'للمتخصصين', icon: '🎓',
+    questions: [
+        { text: 'من هو الصحابي الذي قال له النبي ﷺ: "أنت مني بمنزلة هارون من موسى"؟', options: ['أبو بكر','عمر','علي بن أبي طالب','عثمان'], correct: 2, category: 'السيرة', difficulty: 4, explanation: 'النبي ﷺ قال لعلي رضي الله عنه: "أنت مني بمنزلة هارون من موسى إلا أنه لا نبي بعدي" في غزوة تبوك.' },
+        { text: 'كم عدد آيات سورة آل عمران؟', options: ['190 آية','200 آية','210 آية','220 آية'], correct: 1, category: 'القرآن', difficulty: 4, explanation: 'سورة آل عمران ثالث سور القرآن، تتكون من 200 آية، وهي من السور المدنية.' },
+        { text: 'ما هو "الإسراء" في سورة الإسراء؟', options: ['رحلة ليلية','هجرة النبي','غزوة','رؤيا'], correct: 0, category: 'القرآن', difficulty: 4, explanation: 'الإسراء هو السفر الليلي بالنبي ﷺ من المسجد الحرام إلى المسجد الأقصى، ثم المعراج إلى السماوات.' },
+        { text: 'من هو "سيد الشهداء"؟', options: ['حمزة بن عبد المطلب','الحسين بن علي','جعفر بن أبي طالب','جميع ما سبق'], correct: 3, category: 'السيرة', difficulty: 4, explanation: 'النبي ﷺ سمى حمزة سيد الشهداء، وكذلك الحسين رضي الله عنهما، وجعفر بن أبي طالب (ذو الجناحين).' },
+        { text: 'ما هي "السنن الرواتب"؟', options: ['صلاة الضحى','النوافل المؤكدة قبل الفرائض','قيام الليل','صلاة الكسوف'], correct: 1, category: 'الفقه', difficulty: 4, explanation: 'السنن الرواتب هي النوافل المؤكدة قبل وبعد الفرائض: ركعتان قبل الفجر، وأربع قبل الظهر، وركعتان بعدها، وركعتان بعد المغرب، وركعتان بعد العشاء.' },
+        { text: 'من هو "ذو الجناحين"؟', options: ['حمزة','جعفر بن أبي طالب','خالد بن الوليد','عبد الله بن رواحة'], correct: 1, category: 'السيرة', difficulty: 4, explanation: 'جعفر بن أبي طالب لُقب بـ"ذي الجناحين" لأن النبي ﷺ رأى أن الله أبدله يديه جناحين يطير بهما في الجنة.' },
+        { text: 'ما هي "السورة التي بها سجدتان"؟', options: ['الحج','الأنعام','النحل','الإسراء'], correct: 0, category: 'القرآن', difficulty: 4, explanation: 'سورة الحج هي السورة الوحيدة في القرآن التي بها سجدتان: في الآية 18 والآية 77.' },
+        { text: 'كم عدد سجدات التلاوة في القرآن الكريم؟', options: ['12 سجدة','14 سجدة','15 سجدة','16 سجدة'], correct: 1, category: 'القرآن', difficulty: 4, explanation: 'في القرآن 14 سجدة تلاوة (15 في المذهب الحنفي)، وهي مواضع يُستحب للقارئ والسامع السجود عندها.' },
+        { text: 'من هو "المُطْعِمُ" في حديث السبعة الذين يظلهم الله؟', options: ['رجلان تحابا في الله','رجل تصدق بصدقة فأخفاها','رجل ذكر الله خالياً ففاضت عيناه','رجل قلبه معلق بالمساجد'], correct: 1, category: 'الحديث', difficulty: 4, explanation: 'في الحديث: "سبعة يظلهم الله في ظله يوم لا ظل إلا ظله" ومنهم "رجلان تحابا في الله اجتمعا عليه وتفرقا عليه".' },
+        { text: 'ما هو "الناسخ والمنسوخ" في القرآن؟', options: ['آيات متشابهة','آية أبطلت حكم آية','آيات محكمات','آيات متشابهات'], correct: 1, category: 'القرآن', difficulty: 4, explanation: 'الناسخ والمنسوخ: آية أبطلت حكم آية سابقة، وهو علم من علوم القرآن يُعرف به الآيات التي نسختها آيات أخرى.' }
+    ]
+},
+{
+    id: 5, name: 'العالم', desc: 'قمة التحدي', icon: '👑',
+    questions: [
+        { text: 'من هو الصحابي الذي كان النبي ﷺ يُسميه "السابق"؟', options: ['أبو بكر','بلال بن رباح','عمار بن ياسر','سلمان الفارسي'], correct: 0, category: 'السيرة', difficulty: 5, explanation: 'أبو بكر الصديق سُمي "السابق" لأنه سبق الناس إلى الإسلام والصدقة والهجرة والجهاد وغيرها من الخيرات.' },
+        { text: 'كم عدد أحرف "بسم الله الرحمن الرحيم" في القرآن؟', options: ['18 حرفاً','19 حرفاً','20 حرفاً','21 حرفاً'], correct: 1, category: 'القرآن', difficulty: 5, explanation: 'بسم الله الرحمن الرحيم تتكون من 19 حرفاً، وهي تُقرأ في بداية كل سورة ما عدا سورة التوبة.' },
+        { text: 'ما هي "السورة التي لا تبدأ بالبسملة"؟', options: ['التوبة','الأنفال','الرعد','الحجرات'], correct: 0, category: 'القرآن', difficulty: 5, explanation: 'سورة التوبة هي السورة الوحيدة التي لا تبدأ بالبسملة، لأنها نزلت في السيف والجهاد ضد المشركين.' },
+        { text: 'من هو "القائل: لو وزن إيمان أبي بكر لرجح إيمان هذه الأمة كلها"؟', options: ['عمر بن الخطاب','علي بن أبي طالب','عمار بن ياسر','النبي ﷺ'], correct: 3, category: 'الحديث', difficulty: 5, explanation: 'النبي ﷺ قال: "لو كنت متخذاً خليلاً لاتخذت أبا بكر خليلاً" وقيل: "لو وزن إيمان أبي بكر لرجح إيمان هذه الأمة".' },
+        { text: 'ما هي "الصلاة التي لا فريضة قبلها"؟', options: ['الفجر','الظهر','المغرب','العشاء'], correct: 2, category: 'الفقه', difficulty: 5, explanation: 'صلاة المغرب لا فريضة قبلها، لكن لها سنة قبلية (ركعتان) وسنتاها بعد الفريضة مؤكدتان.' },
+        { text: 'من هو "صاحب الدرع" في غزوة أحد؟', options: ['عبد الله بن أبي','قتادة بن النعمان','أبو دجانة','سعد بن أبي وقاص'], correct: 1, category: 'السيرة', difficulty: 5, explanation: 'قتادة بن النعمان رضي الله عنه أصيب في غزوة أحد ودخلت الدرع في وجهه، فاستخرجها النبي ﷺ وشفاه.' },
+        { text: 'ما هي "السورة التي تُسمى "الفاضحة"؟', options: ['النور','الأحزاب','التحريم','الناس'], correct: 2, category: 'القرآن', difficulty: 5, explanation: 'سورة التحريم تُسمى الفاضحة لأنها فضحت موقفاً حصل في بيت النبي ﷺ، وهي من السور المدنية.' },
+        { text: 'كم عدد السور التي تبدأ بالحمد لله؟', options: ['4 سور','5 سور','6 سور','7 سور'], correct: 1, category: 'القرآن', difficulty: 5, explanation: 'السور التي تبدأ بالحمد لله خمس: الفاتحة، الأنعام، الكهف، سبأ، فاطر.' },
+        { text: 'من هو "ذو القرنين"؟', options: ['الإسكندر الأكبر','ملك فارسي','ملك رومي','اختلف العلماء فيه'], correct: 3, category: 'القصص', difficulty: 5, explanation: 'اختلف العلماء في شخصية ذي القرنين: هل هو الإسكندر الأكبر أم ملك فارسي أم ملك رومي أم غيرهم، والأقرب أنه ملك صالح من بناء سليمان.' },
+        { text: 'ما هي "الآية التي نزلت في ليلة الزفاف"؟', options: ['آية الحجاب','آية الوضوء','آية التيمم','آية المتعة'], correct: 0, category: 'القرآن', difficulty: 5, explanation: 'آية الحجاب (الأحزاب: 53) نزلت في ليلة زفاف النبي ﷺ بزينب بنت جحش، وهي آية الحجاب الشرعي.' }
+    ]
+}
+];
+
+const badges = [
+    { id: 'first_win', name: 'البداية', icon: '🌟', desc: 'أكمل أول مستوى', condition: (s) => s.completedLevels.length >= 1 },
+    { id: 'three_levels', name: 'المتقدم', icon: '🚀', desc: 'أكمل 3 مستويات', condition: (s) => s.completedLevels.length >= 3 },
+    { id: 'all_levels', name: 'العالم', icon: '👑', desc: 'أكمل كل المستويات', condition: (s) => s.completedLevels.length >= 5 },
+    { id: 'perfect', name: 'الكمال', icon: '💎', desc: 'أكمل مستوى بدون أخطاء', condition: (s) => s.perfectLevels.length > 0 },
+    { id: 'streak_5', name: 'السلسلة', icon: '🔥', desc: '5 إجابات صحيحة متتالية', condition: (s) => s.maxStreak >= 5 },
+    { id: 'streak_10', name: 'الأسطورة', icon: '⚡', desc: '10 إجابات صحيحة متتالية', condition: (s) => s.maxStreak >= 10 },
+    { id: 'speed_demon', name: 'السريع', icon: '⚡', desc: 'أجب بصح في أقل من 5 ثوانٍ', condition: (s) => s.fastAnswers >= 1 },
+    { id: 'scholar', name: 'العالم', icon: '📚', desc: 'اجمع 1000 نقطة', condition: (s) => s.totalScore >= 1000 },
+    { id: 'explorer', name: 'المستكشف', icon: '🔍', desc: 'اقرأ 20 تفصيلاً', condition: (s) => s.explanationsRead >= 20 }
+];
+
+let gameState = {
+    currentLevel: null, currentQuestion: 0, score: 0, correctAnswers: 0, wrongAnswers: 0,
+    streak: 0, maxStreak: 0, timer: null, timeLeft: 30,
+    completedLevels: [], perfectLevels: [], totalScore: 0, totalBadges: 0,
+    fastAnswers: 0, explanationsRead: 0, earnedBadges: [], xp: 0, level: 1
+};
+
+function loadState() {
+    const saved = localStorage.getItem('fahim_game_state');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        gameState = { ...gameState, ...parsed };
+        updateStats();
+    }
+}
+
+function saveState() {
+    localStorage.setItem('fahim_game_state', JSON.stringify({
+        completedLevels: gameState.completedLevels, perfectLevels: gameState.perfectLevels,
+        totalScore: gameState.totalScore, totalBadges: gameState.totalBadges,
+        maxStreak: gameState.maxStreak, fastAnswers: gameState.fastAnswers,
+        explanationsRead: gameState.explanationsRead, earnedBadges: gameState.earnedBadges,
+        xp: gameState.xp, level: gameState.level
+    }));
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    if (screenId === 'levelsScreen') renderLevels();
+    if (screenId === 'badgesScreen') renderBadges();
+}
+
+function renderLevels() {
+    const grid = document.getElementById('levelsGrid');
+    grid.innerHTML = '';
+    levels.forEach((level, index) => {
+        const isLocked = index > 0 && !gameState.completedLevels.includes(levels[index - 1].id);
+        const isCompleted = gameState.completedLevels.includes(level.id);
+        const isPerfect = gameState.perfectLevels.includes(level.id);
+        const card = document.createElement('div');
+        card.className = `level-card ${isLocked ? 'locked' : ''}`;
+        if (!isLocked) card.onclick = () => startLevel(level.id);
+        card.innerHTML = `<span class="level-icon">${isPerfect ? '👑' : level.icon}</span><div class="level-name">${level.name}</div><div class="level-desc">${level.desc}</div><div class="level-stars">${isPerfect ? '⭐⭐⭐' : isCompleted ? '⭐⭐' : isLocked ? '🔒' : '⚪⚪⚪'}</div>`;
+        grid.appendChild(card);
+    });
+}
+
+function startLevel(levelId) {
+    const level = levels.find(l => l.id === levelId);
+    gameState.currentLevel = level;
+    gameState.currentQuestion = 0;
+    gameState.score = 0;
+    gameState.correctAnswers = 0;
+    gameState.wrongAnswers = 0;
+    gameState.streak = 0;
+    showScreen('gameScreen');
+    showQuestion();
+}
+
+function showQuestion() {
+    const level = gameState.currentLevel;
+    const question = level.questions[gameState.currentQuestion];
+    document.getElementById('questionCounter').textContent = `${gameState.currentQuestion + 1} / ${level.questions.length}`;
+    document.getElementById('progressFill').style.width = `${((gameState.currentQuestion + 1) / level.questions.length) * 100}%`;
+    document.getElementById('categoryBadge').textContent = question.category;
+    document.getElementById('questionText').textContent = question.text;
+    const dotsContainer = document.getElementById('difficultyDots');
+    dotsContainer.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const dot = document.createElement('div');
+        dot.className = `difficulty-dot ${i <= question.difficulty ? 'active' : ''}`;
+        dotsContainer.appendChild(dot);
+    }
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = '';
+    const letters = ['أ', 'ب', 'ج', 'د'];
+    question.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = `<span class="option-letter">${letters[idx]}</span><span>${opt}</span>`;
+        btn.onclick = () => selectAnswer(idx, btn);
+        optionsContainer.appendChild(btn);
+    });
+    document.getElementById('explanationBox').classList.remove('show');
+    startTimer();
+    document.getElementById('questionCard').style.animation = 'none';
+    setTimeout(() => { document.getElementById('questionCard').style.animation = 'slideUp 0.5s ease'; }, 10);
+}
+
+function startTimer() {
+    clearInterval(gameState.timer);
+    gameState.timeLeft = 30;
+    updateTimerDisplay();
+    gameState.timer = setInterval(() => {
+        gameState.timeLeft--;
+        updateTimerDisplay();
+        if (gameState.timeLeft <= 0) { clearInterval(gameState.timer); timeUp(); }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const timerText = document.getElementById('timerText');
+    const timerCircle = document.getElementById('timerCircle');
+    const timerContainer = document.getElementById('timerContainer');
+    timerText.textContent = gameState.timeLeft;
+    const offset = 283 - (gameState.timeLeft / 30) * 283;
+    timerCircle.style.strokeDashoffset = offset;
+    timerContainer.classList.remove('timer-warning', 'timer-danger');
+    if (gameState.timeLeft <= 10) timerContainer.classList.add('timer-danger');
+    else if (gameState.timeLeft <= 20) timerContainer.classList.add('timer-warning');
+}
+
+function timeUp() {
+    const buttons = document.querySelectorAll('.option-btn');
+    const question = gameState.currentLevel.questions[gameState.currentQuestion];
+    buttons.forEach((btn, idx) => {
+        btn.classList.add('disabled');
+        if (idx === question.correct) btn.classList.add('revealed');
+    });
+    showExplanation();
+    gameState.streak = 0;
+    gameState.wrongAnswers++;
+}
+
+function selectAnswer(index, btn) {
+    clearInterval(gameState.timer);
+    const question = gameState.currentLevel.questions[gameState.currentQuestion];
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach(b => b.classList.add('disabled'));
+    const timeTaken = 30 - gameState.timeLeft;
+    if (index === question.correct) {
+        btn.classList.add('correct');
+        gameState.correctAnswers++;
+        gameState.streak++;
+        if (gameState.streak > gameState.maxStreak) gameState.maxStreak = gameState.streak;
+        let points = 100 * question.difficulty;
+        if (timeTaken < 5) { points += 50; gameState.fastAnswers++; }
+        else if (timeTaken < 10) points += 25;
+        if (gameState.streak >= 3) points += gameState.streak * 10;
+        gameState.score += points;
+        if (gameState.streak >= 3) showStreak();
+        createConfetti();
+    } else {
+        btn.classList.add('wrong');
+        buttons[question.correct].classList.add('revealed');
+        gameState.streak = 0;
+        gameState.wrongAnswers++;
+    }
+    showExplanation();
+}
+
+function showStreak() {
+    const indicator = document.getElementById('streakIndicator');
+    const text = document.getElementById('streakText');
+    text.textContent = `${gameState.streak} إجابات صحيحة متتالية! 🔥`;
+    indicator.classList.add('show');
+    setTimeout(() => indicator.classList.remove('show'), 2000);
+}
+
+function showExplanation() {
+    const question = gameState.currentLevel.questions[gameState.currentQuestion];
+    document.getElementById('explanationText').textContent = question.explanation;
+    document.getElementById('explanationBox').classList.add('show');
+    gameState.explanationsRead++;
+}
+
+function nextQuestion() {
+    gameState.currentQuestion++;
+    if (gameState.currentQuestion >= gameState.currentLevel.questions.length) endLevel();
+    else showQuestion();
+}
+
+function endLevel() {
+    const level = gameState.currentLevel;
+    const totalQuestions = level.questions.length;
+    const accuracy = Math.round((gameState.correctAnswers / totalQuestions) * 100);
+    const isPerfect = gameState.wrongAnswers === 0;
+    if (!gameState.completedLevels.includes(level.id)) gameState.completedLevels.push(level.id);
+    if (isPerfect && !gameState.perfectLevels.includes(level.id)) gameState.perfectLevels.push(level.id);
+    gameState.totalScore += gameState.score;
+    gameState.xp += gameState.score;
+    checkBadges();
+    saveState();
+    updateStats();
+    showScorePopup(accuracy, isPerfect);
+}
+
+function showScorePopup(accuracy, isPerfect) {
+    const popup = document.getElementById('scorePopup');
+    const emoji = document.getElementById('scoreEmoji');
+    const title = document.getElementById('scoreTitle');
+    const value = document.getElementById('scoreValue');
+    const message = document.getElementById('scoreMessage');
+    if (isPerfect) { emoji.textContent = '👑'; title.textContent = 'ممتاز! أداء لا يُضاهى'; message.textContent = 'أكملت المستوى بدون أي أخطاء! أنت عالم حقيقي'; }
+    else if (accuracy >= 80) { emoji.textContent = '🎉'; title.textContent = 'أحسنت!'; message.textContent = 'أداء رائع! استمر في التعلم'; }
+    else if (accuracy >= 60) { emoji.textContent = '👍'; title.textContent = 'جيد!'; message.textContent = 'أداء جيد، يمكنك التحسن أكثر'; }
+    else { emoji.textContent = '💪'; title.textContent = 'حاول مرة أخرى'; message.textContent = 'لا تستسلم! التعلم يحتاج صبراً'; }
+    value.textContent = gameState.score;
+    document.getElementById('correctCount').textContent = gameState.correctAnswers;
+    document.getElementById('wrongCount').textContent = gameState.wrongAnswers;
+    document.getElementById('accuracy').textContent = accuracy + '%';
+    const earnedContainer = document.getElementById('earnedBadges');
+    earnedContainer.innerHTML = '';
+    const newBadges = checkBadges();
+    if (newBadges.length > 0) {
+        newBadges.forEach(badge => {
+            const div = document.createElement('div');
+            div.className = 'badge new';
+            div.innerHTML = `${badge.icon} ${badge.name}`;
+            earnedContainer.appendChild(div);
+        });
+    }
+    const xpNeeded = gameState.level * 500;
+    const xpPercent = Math.min((gameState.xp / xpNeeded) * 100, 100);
+    document.getElementById('xpText').textContent = `${gameState.xp} / ${xpNeeded}`;
+    document.getElementById('xpFill').style.width = xpPercent + '%';
+    if (gameState.xp >= xpNeeded) { gameState.level++; gameState.xp = 0; }
+    popup.classList.add('show');
+    createConfetti();
+}
+
+function closeScorePopup() {
+    document.getElementById('scorePopup').classList.remove('show');
+    showScreen('levelsScreen');
+}
+
+function checkBadges() {
+    const newBadges = [];
+    badges.forEach(badge => {
+        if (!gameState.earnedBadges.includes(badge.id) && badge.condition(gameState)) {
+            gameState.earnedBadges.push(badge.id);
+            gameState.totalBadges++;
+            newBadges.push(badge);
+        }
+    });
+    return newBadges;
+}
+
+function renderBadges() {
+    const container = document.getElementById('badgesContainer');
+    container.innerHTML = '';
+    badges.forEach(badge => {
+        const earned = gameState.earnedBadges.includes(badge.id);
+        const div = document.createElement('div');
+        div.className = `badge ${earned ? 'new' : ''}`;
+        div.style.opacity = earned ? '1' : '0.4';
+        div.innerHTML = `${badge.icon} ${badge.name}`;
+        div.title = badge.desc;
+        container.appendChild(div);
+    });
+}
+
+function updateStats() {
+    document.getElementById('totalScore').textContent = gameState.totalScore;
+    document.getElementById('totalBadges').textContent = gameState.totalBadges;
+}
+
+function createConfetti() {
+    const colors = ['#e9c46a', '#2a9d8f', '#1e6f5c', '#f4a261', '#e76f51'];
+    for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 4000);
+    }
+}
+
+function createParticles() {
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.width = (Math.random() * 4 + 2) + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.background = `rgba(${Math.random() > 0.5 ? '42,157,143' : '233,196,106'}, ${Math.random() * 0.3 + 0.1})`;
+        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+        particle.style.animationDelay = Math.random() * 10 + 's';
+        document.body.appendChild(particle);
+    }
+}
+
+window.onload = () => { loadState(); createParticles(); updateStats(); };
+</script>
+</body>
+</html>
